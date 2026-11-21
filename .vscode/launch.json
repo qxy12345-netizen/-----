@@ -1,0 +1,52 @@
+{
+    // =========================================================================
+    //  F5 调试配置 —— cortex-debug + ST-LINK_gdbserver（STM32CubeIDE 自带）
+    //
+    //  ⚠️ 如果按 F5 弹 "配置的类型 cortex-debug 不受支持"，那不是这份配置写错了，
+    //     而是 VSCode 没把 cortex-debug 扩展算进当前窗口。三种情况：
+    //       1) 扩展被禁用了  -> 扩展面板搜 cortex-debug，点"启用"
+    //       2) 窗口没重载    -> Ctrl+Shift+P -> Developer: Reload Window
+    //       3) 扩展没装上    -> 点弹窗里的"安装 cortex-debug 扩展"
+    //     确认方法：Ctrl+Shift+P -> "Developer: Show Running Extensions"，
+    //     列表里要能看到 "Cortex-Debug"（marus25.cortex-debug）。
+    //
+    //  ⚠️ 调试不是必须的。只想把程序跑起来，用
+    //     终端 → 运行任务 → flash (ST-Link)
+    //     它只编译 + 烧录 + 复位，完全不碰调试器。
+    //
+    //  ⚠️ 日志停在 "Launching GDB" 之后就没下文了？
+    //     那是 ST-Link 连不上芯片，不是 cortex-debug 的问题。
+    //     手动验证（终端里跑）：
+    //       ST-LINK_gdbserver.exe -p 50000 -s -cp "<CubeProgrammer>/bin"
+    //     会打印 "No device found on target"，指向 SWD 接线。
+    //     想在这里看到同样的话，把下面的 showDevDebugOutput 改成 "raw"。
+    //
+    //  三个路径需要和你的机器对上（换电脑 / 升级 CubeIDE 后改这里）：
+    //    stlinkPath —— ST-LINK_gdbserver.exe
+    //    gdbPath    —— arm-none-eabi-gdb.exe
+    //    stm32cubeprogrammer —— STM32CubeProgrammer 的 bin 目录
+    // =========================================================================
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "name": "调试 (ST-Link / SWD)",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/matrix3.elf",
+            "servertype": "stlink",
+            "stlinkPath": "D:/ST/STM32CubeIDE_2.1.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.stlink-gdb-server.win32_2.2.400.202601091506/tools/bin/ST-LINK_gdbserver.exe",
+            "stm32cubeprogrammer": "C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin",
+            "gdbPath": "D:/ST/STM32CubeIDE_2.1.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin/arm-none-eabi-gdb.exe",
+            "device": "STM32F103C8",
+            "interface": "swd",
+            "runToEntryPoint": "main",
+            // 调试前先杀掉 stlinkserver，否则它占着探针，gdbserver 起不来
+            "preLaunchTask": "debug-prep",
+            // "raw" = 把 gdb / gdbserver 的原始输出全部打到调试控制台。
+            // 现在先开着，方便看 gdbserver 到底报什么错；
+            // 等能正常调试了再改回 "none"，不然日志太吵。
+            "showDevDebugOutput": "raw"
+        }
+    ]
+}

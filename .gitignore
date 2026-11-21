@@ -1,0 +1,15 @@
+# CMake / 编译产物
+build/
+build-*/
+CMakeUserPresets.json
+compile_commands.json
+*.o
+*.obj
+*.d
+*.map
+*.elf
+*.hex
+*.bin
+
+# PC 端预览的中间文件（preview.png 要保留，README 引用了它）
+tools/preview.ppm

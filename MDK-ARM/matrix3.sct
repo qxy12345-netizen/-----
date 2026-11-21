@@ -1,0 +1,18 @@
+; *****************************************************************
+;  matrix3.sct —— Keil 分散加载文件（STM32F407VET6）
+;  Flash 512KB @0x08000000 ，SRAM 128KB @0x20000000
+;
+;  Options for Target -> Linker -> 取消勾选 Use Memory Layout from
+;  Target Dialog，然后 Scatter File 选本文件。
+; *****************************************************************
+LR_IROM1 0x08000000 0x00080000  {
+  ER_IROM1 0x08000000 0x00080000  {
+   *.o (RESET, +First)
+   *(InRoot$$Sections)
+   .ANY (+RO)
+   .ANY (+XO)
+  }
+  RW_IRAM1 0x20000000 0x00020000  {
+   .ANY (+RW +ZI)
+  }
+}

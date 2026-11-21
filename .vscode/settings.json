@@ -1,0 +1,24 @@
+{
+    // =========================================================================
+    //  VSCode 的 CMake 相关设置
+    //
+    //  ⚠️ 重要：本工程**必须放在纯英文路径下**构建。
+    //     CMake 3.x 在 Windows 上处理不了含中文的路径（会直接崩，退出码 0xC0000409，
+    //     日志里路径显示成乱码）。当前工作区路径 E:\VScode\新型装甲板 带中文，
+    //     所以请改从 ASCII 路径打开：
+    //
+    //        E:\VScode\m3        <- 指向本文件夹的目录联接，已创建好
+    //
+    //     或者干脆把文件夹改名成 E:\VScode\matrix3 之类。
+    //     详见 README 第 4.5 节。
+    // =========================================================================
+    "cmake.useCMakePresets": "always",
+    "cmake.cmakePath": "D:/ST/STM32CubeIDE_2.1.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.cmake.win32_1.1.101.202603101401/tools/bin/cmake.exe",
+    "cmake.configureOnOpen": false,
+    "cmake.saveBeforeBuild": true,
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+    "files.associations": {
+        "*.ld": "linkerscript",
+        "CMakeLists.txt": "cmake"
+    }
+}

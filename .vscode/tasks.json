@@ -1,0 +1,108 @@
+{
+    // =========================================================================
+    //  构建任务（CMake + Makefiles 生成器）
+    //
+    //  路径需要和你的机器对上 —— 都在 options.env.PATH 里：
+    //    cmake  : STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.cmake.win32_*
+    //    ninja  : STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.ninja.win32_*
+    //    gcc    : STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.*
+    //    CubeProgrammer 的 bin：flash 要用 STM32_Programmer_CLI
+    //
+    //  ⚠️ 工程必须从纯英文路径打开（E:\VScode\m3 这个目录联接），
+    //     CMake 处理不了中文路径。原因见 .vscode/settings.json 与 README 4.5。
+    //
+    //  任务里一律用单条命令，不写 && —— PowerShell 5.1 不支持 &&，
+    //  "配置 + 编译"用 VSCode 的 dependsOn 串起来，任何 shell 下都能跑。
+    // =========================================================================
+    "version": "2.0.0",
+    "options": {
+        // 固定用 PowerShell，命令语法才可预期（不写 &&、用 PowerShell 的分隔符）
+        "shell": {
+            "executable": "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe",
+            "args": ["-NoProfile", "-Command"]
+        },
+        "env": {
+            // Windows 风格：分号分隔、盘符带冒号
+            "PATH": "D:/ST/STM32CubeIDE_2.1.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.cmake.win32_1.1.101.202603101401/tools/bin;D:/ST/STM32CubeIDE_2.1.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.ninja.win32_1.1.100.202601091506/tools/bin;D:/ST/STM32CubeIDE_2.1.1/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.win32_1.0.100.202602081740/tools/bin;C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin;${env:PATH}"
+        }
+    },
+    "tasks": [
+        {
+            "label": "release ST-Link",
+            "type": "shell",
+            // stlinkserver.exe 是 ST 工具链的后台服务，用过 Keil/CubeIDE 或调试失败后
+            // 它会一直占着探针，导致 CubeProgrammer 报 "Unable to get core ID"。
+            // 这里强制结束它；没在跑时也返回成功，不影响后续任务。
+            "command": "taskkill /F /IM stlinkserver.exe 2>$null; exit 0",
+            "problemMatcher": [],
+            "detail": "释放被 stlinkserver 占用的 ST-Link（F5 或烧录前自动执行）"
+        },
+        {
+            "label": "debug-prep",
+            "dependsOrder": "sequence",
+            "dependsOn": ["release ST-Link", "build"],
+            "problemMatcher": [],
+            "detail": "F5 之前：先释放探针，再编译"
+        },
+        {
+            "label": "build",
+            "dependsOrder": "sequence",
+            "dependsOn": ["configure", "compile"],
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": [],
+            "detail": "配置 + 编译（Ctrl+Shift+B），产物在 build/"
+        },
+        {
+            "label": "configure",
+            "type": "shell",
+            "command": "cmake --preset debug",
+            "problemMatcher": [],
+            "detail": "生成 build/ 和 compile_commands.json"
+        },
+        {
+            "label": "compile",
+            "type": "shell",
+            "command": "cmake --build --preset debug",
+            "problemMatcher": ["$gcc"],
+            "detail": "只编译，输出 matrix3.elf / .hex / .bin"
+        },
+        {
+            "label": "rebuild",
+            "type": "shell",
+            "command": "cmake --build --preset debug --clean-first",
+            "problemMatcher": ["$gcc"],
+            "detail": "清掉目标文件后重编（需要先 build 过一次）"
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "cmake --build --preset debug --target clean",
+            "problemMatcher": [],
+            "detail": "删除 build 里的中间文件"
+        },
+        {
+            "label": "flash (ST-Link)",
+            "type": "shell",
+            "command": "cmake --build --preset debug --target flash",
+            "dependsOrder": "sequence",
+            "dependsOn": ["release ST-Link", "build"],
+            "problemMatcher": [],
+            "detail": "编译 + 用 STM32_Programmer_CLI 通过 ST-Link 烧录并复位"
+        },
+        {
+            "label": "check SWD (只连接不烧录)",
+            "type": "shell",
+            "command": "STM32_Programmer_CLI -c port=SWD mode=normal",
+            "problemMatcher": [],
+            "detail": "只连一下芯片，不改 Flash。能打印芯片型号=SWD通了；报 No STM32 target found=线没接好"
+        },
+        {
+            "label": "flash (串口 ISP，绕过 SWD)",
+            "type": "shell",
+            // ⚠️ 把 COM3 改成你的 USB-TTL 串口号（设备管理器里看）
+            "command": "STM32_Programmer_CLI -c port=COM3 -b 115200 -w build/matrix3.bin 0x08000000",
+            "problemMatcher": [],
+            "detail": "SWD 连不上时的备用方案：BOOT0 拨到 1 + 复位后用串口烧，烧完 BOOT0 拨回 0 再复位"
+        }
+    ]
+}
